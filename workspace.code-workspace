@@ -1,0 +1,34 @@
+{
+	"folders": [
+		{
+			"path": "front-end"
+		},
+		{
+			"path": "broker-service"
+		},
+		{
+			"path": "project"
+		},
+		{
+			"path": "auth-service"
+		},
+		{
+			"path": "logger-service"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "d:\\Projects\\MicroservicesWithGO\\front-end",
+		"sqltools.connections": [
+			{
+				"previewLimit": 50,
+				"server": "host.docker.internal",
+				"port": 5433,
+				"driver": "PostgreSQL",
+				"name": "pg-local-2",
+				"database": "users",
+				"username": "postgres",
+				"password": "password"
+			}
+		]
+	}
+}

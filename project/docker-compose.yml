@@ -60,3 +60,28 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    logging:
+      driver: 'none'  # disable saving logs
+    ports:
+      - 1025:1025 # smtp server
+      - 8025:8025 # web ui
+  mail-service:
+    build: 
+      context: ./../mailing-service
+      dockerfile: ./../mailing-service/mailing-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      MAIL_DOMAIN: localhost
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_ENCRYPTION: none
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      FROM_NAME: "Chetan Bhat"
+      FROM_ADDRESS: chetan.bhat@example.com

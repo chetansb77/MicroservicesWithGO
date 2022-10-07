@@ -19,6 +19,7 @@ services:
 
   mongo:
     image: 'mongo:4.2.16-bionic'
+    restart: always
     ports:
       - "27017:27017"
     environment:
@@ -63,11 +64,13 @@ services:
 
   mailhog:
     image: 'mailhog/mailhog:latest'
+    restart: always
     logging:
       driver: 'none'  # disable saving logs
     ports:
       - 1025:1025 # smtp server
       - 8025:8025 # web ui
+  
   mail-service:
     build: 
       context: ./../mailing-service
@@ -85,3 +88,27 @@ services:
       MAIL_PASSWORD: ""
       FROM_NAME: "Chetan Bhat"
       FROM_ADDRESS: chetan.bhat@example.com
+  
+  rabbitmq:
+    image: 'rabbitmq:3.11.0-management-alpine'
+    restart: always
+    ports:
+      - "5672:5672"
+      - "5000:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=zootsoot
+    deploy:
+      mode: replicated
+      replicas: 1
+    volumes:
+      - ./db-data/rabbitmq/:/var/lib/rabbitmq/
+
+  listener-service:
+    build: 
+      context: ./../listener-service
+      dockerfile: ./../listener-service/listener-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1

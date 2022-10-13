@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"log"
 	"log-service/data"
+	"log-service/logs"
+	"net"
 	"net/http"
+	"net/rpc"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -68,8 +72,13 @@ func main() {
 		Models: data.New(client),
 	}
 
+	// Starting RPC server by registering RPC server
+	err = rpc.Register(new(RPCServer))
+	go app.rpcListen()
+
+	go app.gRPCListen()
+
 	// start web server
-	// go app.serve()
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
@@ -81,14 +90,36 @@ func main() {
 	}
 }
 
-func (app *Config) serve() {
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
+func (app *Config) rpcListen() error {
+	log.Println("Starting RPC server on port ", rpcPort)
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
+	if err != nil {
+		return err
+	}
+	defer listen.Close()
+
+	for {
+		rpcConn, err := listen.Accept()
+		if err != nil {
+			continue
+		}
+		go rpc.ServeConn(rpcConn)
+	}
+}
+
+func (app *Config) gRPCListen() {
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", grpcPort))
+	if err != nil {
+		log.Fatalf("Failed to listen for gRPC: %v", err)
 	}
 
-	err := srv.ListenAndServe()
-	if err != nil {
-		log.Panic()
+	s := grpc.NewServer()
+
+	logs.RegisterLogServiceServer(s, &LogServer{Models: app.Models})
+
+	log.Printf("gRPC Server started on port %s", grpcPort)
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("Failed to listen for gRPC: %v", err)
 	}
 }
